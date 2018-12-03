@@ -1,4 +1,4 @@
 {
-    "graph": "/data/test_output.jsonlines",
+    "graph": "/data/test_output.jsonl",
     "video": "/data/test.mp4"
 }

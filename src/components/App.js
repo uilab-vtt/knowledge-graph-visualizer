@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import Header from './Header';
-import GraphView from './GraphView';
+import GraphPlayer from './GraphPlayer';
 import Config from '../config.json';
 import { loadGraph } from '../lib/graph';
 import './App.css';
@@ -20,11 +20,17 @@ export default class App extends Component {
       .catch(e => console.error(e));
   }
 
+  renderGraphPlayer() {
+    const { graph, videoUrl } = this.state;
+    return graph === null ? '' : (
+      <GraphPlayer
+        videoUrl={videoUrl}
+        graph={graph}
+      />
+    );
+  }
+
   render() {
-    const {
-      videoUrl,
-      graph,
-    } = this.state;
     return (
       <div className="App">
         <header className="App-header-row">
@@ -32,10 +38,7 @@ export default class App extends Component {
         </header>
         <div className="App-content-row">
           <div className="App-content-container">
-            <GraphView
-              videoUrl={videoUrl}
-              graph={graph}
-            />
+            {this.renderGraphPlayer()}
           </div>
         </div>
       </div>
