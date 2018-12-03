@@ -63,6 +63,7 @@ function convertGraph(rows) {
           ...row,
           id: `item-${row.id}`,
           color: getItemColor(row),
+          label: `${row.class}:${row.label}`,
         });
         break;
 
@@ -70,26 +71,26 @@ function convertGraph(rows) {
         nodes.push({
           id: `property-${row.id}`,
           color: getPropColor(row),
+          label: `${row.classname}`,
         });
         links.push({
           id: `plink-source-${row.id}`,
           source: `item-${row.source_item_id}`,
           target: `property-${row.id}`,
-          value: 1,
+          type: 'arrow',
         });
         links.push({
           id: `plink-target-${row.id}`,
           source: `property-${row.id}`,
           target: `item-${row.target_item_id}`,
-          value: 1,
+          type: 'arrow',
         });
         if (row.relation_item_id) {
           links.push({
             id: `plink-relation-${row.id}`,
             source: `property-${row.id}`,
             target: `item-${row.relation_item_id}`,
-            value: 1,
-            dotted: true,
+            type: 'dotted',
           });
         }
         break;

@@ -34,9 +34,6 @@ export default class Header extends Component {
 
     const links = graph.links.map(d => Object.create(d));
     const nodes = graph.nodes.map(d => Object.create(d));
-    // const links = graph.links.slice();
-    // const nodes = graph.nodes.slice();
-    console.log('ln', links, nodes)
 
     const simulation = this.forceSimulation(nodes, links).on("tick", () => this.ticked());
 
@@ -49,14 +46,28 @@ export default class Header extends Component {
       .attr('height', boxHeight)
       .attr('viewBox', [-boxWidth / 2, -boxHeight / 2, boxWidth, boxHeight]);
 
-    console.log('links', graph.links, links);
+    this.svg.append('defs').append('marker')
+      .attr('id', 'arrowhead')
+      .attr('viewBox', '-0 -5 10 10')
+      .attr('refX', 9)
+      .attr('refY', 0)
+      .attr('orient', 'auto')
+      .attr('markerWidth', 13)
+      .attr('markerHeight', 13)
+      .attr('xoverflow', 'visible')
+      .append('svg:path')
+      .attr('d', 'M 0,-2.5 L 5 ,0 L 0,2.5')
+      .attr('fill', '#999')
+      .style('stroke', 'none');
+
     this.link = this.svg.append('g')
       .attr('stroke', '#999')
       .attr('stroke-opacity', 0.6)
       .selectAll('line')
       .data(links, d => d.id)
       .enter().append('line')
-      .style('stroke-dasharray', d => d.dotted ? '3,3' : '3,0')
+      .style('stroke-dasharray', d => d.type === 'dotted' ? '3,3' : '3,0')
+      .attr('marker-end', d => d.type === 'arrow' ? 'url(#arrowhead)' : '')
       .attr('stroke-width', d => Math.sqrt(d.value));
 
     this.node = this.svg.append('g')
