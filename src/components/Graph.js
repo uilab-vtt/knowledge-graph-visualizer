@@ -54,18 +54,19 @@ export default class Header extends Component {
       .attr('stroke', '#999')
       .attr('stroke-opacity', 0.6)
       .selectAll('line')
-      .data(links)
+      .data(links, d => d.id)
       .enter().append('line')
+      .style('stroke-dasharray', d => d.dotted ? '3,3' : '3,0')
       .attr('stroke-width', d => Math.sqrt(d.value));
 
     this.node = this.svg.append('g')
       .attr('stroke', '#fff')
       .attr('stroke-width', 1.5)
       .selectAll('circle')
-      .data(nodes)
+      .data(nodes, d => d.id)
       .enter().append('circle')
       .attr('r', 5)
-      .attr('fill', this.color)
+      .attr('fill', d => `#${d.color}`)
       .call(this.drag(simulation));
 
     this.node.append('title')
