@@ -1,3 +1,8 @@
+* {
+  box-sizing: border-box;
+  -webkit-overflow-scrolling: touch;
+}
+
 body {
   margin: 0;
   padding: 0;
