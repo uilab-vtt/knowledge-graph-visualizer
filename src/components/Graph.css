@@ -12,4 +12,5 @@
 .g-node-labels {
   font: 10px sans-serif;
   fill: #454545;
+  cursor: default;
 }

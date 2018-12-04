@@ -32,7 +32,7 @@
   display: flex;
   align-items: center;
   flex-flow: row nowrap;
-  flex: 0 0 auto;
+  flex: 0 0 45px;
 }
 
 .GraphPlayer-buttons-container {
@@ -41,6 +41,7 @@
 
 .GraphPlayer-buttons-container .button {
   border-radius: 0;
+  margin-bottom: 0 !important;
 }
 
 .GraphPlayer-status-container {
