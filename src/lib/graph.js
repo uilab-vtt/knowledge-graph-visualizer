@@ -1,3 +1,4 @@
+import { decamelize } from 'humps';
 
 const COLORS = [
   'ffe79a',
@@ -64,7 +65,7 @@ function convertGraph(rows) {
           type: 'item',
           id: `item-${row.id}`,
           color: getItemColor(row),
-          label: `${row.class}:${row.label}`,
+          label: `${decamelize(row.class)}:${decamelize(row.label).replace(/ /g, '')}`,
           isValid: () => true,
         };
         nodes.push(node);
@@ -77,7 +78,7 @@ function convertGraph(rows) {
           type: 'property',
           id: `property-${row.id}`,
           color: getPropColor(row),
-          label: `${row.classname}`,
+          label: `${decamelize(row.classname)}`,
           isValid: t => (t >= row.time_start && t <= row.time_end),
         });
         links.push({
