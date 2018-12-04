@@ -6,8 +6,15 @@ import './Graph.css';
 export default class Header extends Component {
   componentDidMount() {
     this.adjustViewBoxThr = throttle(500, this.adjustViewBox); 
-    this.initGraph();
+    this.drawGraph();
     window.addEventListener('resize', this.handleResize);
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    const { currentTime } = this.props;
+    if (currentTime !== prevProps.currentTime) {
+      this.updateGraph();
+    }
   }
 
   componentWillUnmount() {
@@ -29,13 +36,15 @@ export default class Header extends Component {
     }
   };
 
-  async initGraph() {
+  drawGraph() {
     const { graph } = this.props;
 
-    const links = graph.links.map(d => Object.create(d));
-    const nodes = graph.nodes.map(d => Object.create(d));
+    this.data = {
+      links: graph.links.map(d => Object.create(d)),
+      nodes: graph.nodes.map(d => Object.create(d)),
+    };
 
-    const simulation = this.forceSimulation(nodes, links).on("tick", () => this.ticked());
+    this.simulation = this.forceSimulation(this.data.nodes, this.data.links).on("tick", () => this.ticked());
 
     const boxWidth = this.box.clientWidth;
     const boxHeight = this.box.clientHeight;
@@ -60,30 +69,71 @@ export default class Header extends Component {
       .attr('fill', '#999')
       .style('stroke', 'none');
 
+    this.drawLinks();
+    this.drawNodes();
+
+    return this.svg.node();
+  }
+
+  drawNodes() {
+    const { currentTime } = this.props;
+
+    this.node = this.svg.append('g')
+      .attr('class', 'g-node')
+      .selectAll('g')
+      .data(this.data.nodes, d => d.id)
+      .enter().append('g');
+
+    this.nodeCircles = this.node.append('circle')
+      .attr('r', 5)
+      .attr('fill', d => `#${d.color}`)
+
+    this.nodeLabels = this.node.append('text')
+      .text(d => d.label)
+      .attr('class', 'g-node-labels')
+      .attr('x', 8)
+      .attr('y', 3)
+
+    this.node
+      .style('opacity', d => d.isValid(currentTime) ? 1 : 0.2);
+
+    this.node.call(this.drag(this.simulation));
+
+    this.node.append('title')
+      .text(d => d.label);
+  }
+
+  updateNodes() {
+    const { currentTime } = this.props;
+
+    this.node
+      .style('opacity', d => d.isValid(currentTime) ? 1 : 0.2);
+  }
+
+  drawLinks() {
+    const { currentTime } = this.props;
+
     this.link = this.svg.append('g')
       .attr('stroke', '#999')
       .attr('stroke-opacity', 0.6)
       .selectAll('line')
-      .data(links, d => d.id)
+      .data(this.data.links, d => d.id)
       .enter().append('line')
-      .style('stroke-dasharray', d => d.type === 'dotted' ? '3,3' : '3,0')
-      .attr('marker-end', d => d.type === 'arrow' ? 'url(#arrowhead)' : '')
-      .attr('stroke-width', d => Math.sqrt(d.value));
+      .style('stroke-dasharray', d => d.shape === 'dotted' ? '3,3' : '3,0')
+      .attr('marker-end', d => d.shape === 'arrow' ? 'url(#arrowhead)' : '')
+      .attr('stroke-width', d => Math.sqrt(d.value))
+      .style('opacity', d => d.isValid(currentTime) ? 1 : 0.2);
+  }
 
-    this.node = this.svg.append('g')
-      .attr('stroke', '#fff')
-      .attr('stroke-width', 1.5)
-      .selectAll('circle')
-      .data(nodes, d => d.id)
-      .enter().append('circle')
-      .attr('r', 5)
-      .attr('fill', d => `#${d.color}`)
-      .call(this.drag(simulation));
+  updateLinks() {
+    const { currentTime } = this.props;
 
-    this.node.append('title')
-      .text(d => d.label);
+    this.link.style('opacity', d => d.isValid(currentTime) ? 1 : 0.2);
+  }
 
-    return this.svg.node();
+  updateGraph() {
+    this.updateNodes();
+    this.updateLinks();
   }
 
   ticked() {
@@ -94,14 +144,19 @@ export default class Header extends Component {
       .attr('y2', d => d.target.y);
 
     this.node
-      .attr('cx', d => d.x)
-      .attr('cy', d => d.y);
+      .attr('transform', d => `translate(${d.x}, ${d.y})`);
   }
 
   forceSimulation(nodes, links) {
     return d3.forceSimulation(nodes)
-      .force('link', d3.forceLink(links).id(d => d.id))
+      .force(
+        'link', 
+        d3.forceLink(links)
+          .id(d => d.id)
+          .distance(d => 30)
+      )
       .force('charge', d3.forceManyBody())
+      .force('collide', d3.forceCollide(d => d.type === 'property' ? 25 : 40))
       .force('x', d3.forceX())
       .force('y', d3.forceY());
   }

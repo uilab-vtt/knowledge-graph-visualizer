@@ -56,47 +56,71 @@ function getPropColor(prop) {
 function convertGraph(rows) {
   const nodes = [];
   const links = [];
+  const nodeMap = {};
   for (const row of rows) {
     switch (row.type) {
-      case 'item':
-        nodes.push({
-          ...row,
+      case 'item': if (true) {
+        const node = {
+          type: 'item',
           id: `item-${row.id}`,
           color: getItemColor(row),
           label: `${row.class}:${row.label}`,
-        });
-        break;
+          isValid: () => true,
+        };
+        nodes.push(node);
+        nodeMap[node.id] = node;
+      } 
+      break;
 
-      case 'property':
+      case 'property': if (true) {
         nodes.push({
+          type: 'property',
           id: `property-${row.id}`,
           color: getPropColor(row),
           label: `${row.classname}`,
+          isValid: t => (t >= row.time_start && t <= row.time_end),
         });
         links.push({
+          type: 'property',
           id: `plink-source-${row.id}`,
           source: `item-${row.source_item_id}`,
           target: `property-${row.id}`,
-          type: 'arrow',
+          shape: 'arrow',
+          isValid: t => (t >= row.time_start && t <= row.time_end),
         });
         links.push({
+          type: 'property',
           id: `plink-target-${row.id}`,
           source: `property-${row.id}`,
           target: `item-${row.target_item_id}`,
-          type: 'arrow',
+          shape: 'arrow',
+          isValid: t => (t >= row.time_start && t <= row.time_end),
         });
         if (row.relation_item_id) {
           links.push({
+            type: 'property',
             id: `plink-relation-${row.id}`,
             source: `property-${row.id}`,
             target: `item-${row.relation_item_id}`,
-            type: 'dotted',
+            shape: 'dotted',
+            isValid: t => (t >= row.time_start && t <= row.time_end),
           });
         }
-        break;
-    
+      }
+      break;
+
+      case 'valid_time': if (true) {
+        const nodeId = `item-${row.item_id}`;
+        const node = nodeMap[nodeId];
+        const isPrevValid = node.isValid;
+        node.isValid = null;
+        // eslint-disable-next-line no-loop-func
+        node.isValid = t => (isPrevValid(t) || (t >= row.time_start && t <= row.time_end));
+      }
+      break; 
+
       default:
-        break;
+      break;
     }
   }
   return { nodes, links };
