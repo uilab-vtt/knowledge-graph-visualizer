@@ -34,7 +34,11 @@ const PROP_CLASSNAMES = [
   'related_to',
   'location_of',
   'sound_of',
-]
+];
+
+const TIME_SLACK = 0.35;
+
+const isPropertyNode = true;
 
 function getItemColor(item) {
   const idx = ITEM_CLASSNAMES.indexOf(item.class);
@@ -54,6 +58,84 @@ function getPropColor(prop) {
   }
 }
 
+function addNodeValidTime(node, timeStart, timeEnd) {
+  const isPrevValid = node.isValid;
+  node.isValid = null;
+  // eslint-disable-next-line no-loop-func
+  node.isValid = t => (isPrevValid(t) || (t >= timeStart && t <= timeEnd));
+}
+
+function convertGraphWithPropEdges(rows) {
+  const nodes = [];
+  const links = [];
+  const nodeMap = {};
+  for (const row of rows) {
+    switch (row.type) {
+      case 'item': if (true) {
+        if (row.class === 'unknown') {
+          continue;
+        }
+        const node = {
+          type: 'item',
+          id: `item-${row.id}`,
+          color: getItemColor(row),
+          label: `${row.class}:${row.label}`,
+          isAbstract: row.is_abstract,
+          isValid: row.is_abstract ? () => false : () => true,
+        };
+        nodes.push(node);
+        nodeMap[node.id] = node;
+      }
+        break;
+
+      case 'property': if (true) {
+        const sourceNode = nodeMap[`item-${row.source_item_id}`];
+        const targetNode = nodeMap[`item-${row.target_item_id}`];
+        const timeStart = row.time_start - TIME_SLACK;
+        const timeEnd = row.time_end + TIME_SLACK;
+        if (sourceNode && sourceNode.isAbstract) {
+          addNodeValidTime(sourceNode, timeStart, timeEnd);
+        }
+        if (targetNode && targetNode.isAbstract) {
+          addNodeValidTime(targetNode, timeStart, timeEnd);
+        }
+        if (!(row.relation_item_id)) {
+          if (sourceNode && targetNode) {
+            links.push({
+              type: 'property',
+              id: `plink-source-${row.id}`,
+              source: `item-${row.source_item_id}`,
+              target: `item-${row.target_item_id}`,
+              label: `${decamelize(row.classname)}`,
+              shape: 'arrow',
+              isValid: t => (t >= timeStart && t <= timeEnd),
+            });
+          }
+        } else {
+
+        }
+      }
+        break;
+
+      case 'valid_time': if (true) {
+        const nodeId = `item-${row.item_id}`;
+        const node = nodeMap[nodeId];
+        if (node) {
+          const isPrevValid = node.isValid;
+          node.isValid = null;
+          // eslint-disable-next-line no-loop-func
+          node.isValid = t => (isPrevValid(t) || (t >= row.time_start && t <= row.time_end));
+        }
+      }
+        break;
+
+      default:
+        break;
+    }
+  }
+  return { nodes, links };
+}
+
 function convertGraph(rows) {
   const nodes = [];
   const links = [];
@@ -68,8 +150,9 @@ function convertGraph(rows) {
           type: 'item',
           id: `item-${row.id}`,
           color: getItemColor(row),
-          label: `${decamelize(row.class)}:${decamelize(row.label).replace(/ /g, '')}`,
-          isValid: () => true,
+          label: `${row.class}:${row.label}`,
+          isAbstract: row.is_abstract,
+          isValid: row.is_abstract ? () => false : () => true,
         };
         nodes.push(node);
         nodeMap[node.id] = node;
@@ -77,31 +160,41 @@ function convertGraph(rows) {
       break;
 
       case 'property': if (true) {
+        const sourceNode = nodeMap[`item-${row.source_item_id}`];
+        const targetNode = nodeMap[`item-${row.target_item_id}`];
+        const timeStart = row.time_start - TIME_SLACK;
+        const timeEnd = row.time_end + TIME_SLACK;
+        if (sourceNode && sourceNode.isAbstract) {
+          addNodeValidTime(sourceNode, timeStart, timeEnd);
+        }
+        if (targetNode && targetNode.isAbstract) {
+          addNodeValidTime(targetNode, timeStart, timeEnd);
+        }
         nodes.push({
           type: 'property',
           id: `property-${row.id}`,
           color: getPropColor(row),
           label: `${decamelize(row.classname)}`,
-          isValid: t => (t >= row.time_start && t <= row.time_end),
+          isValid: t => (t >= timeStart && t <= timeEnd),
         });
-        if (nodeMap[`item-${row.source_item_id}`]) {
+        if (sourceNode) {
           links.push({
             type: 'property',
             id: `plink-source-${row.id}`,
             source: `item-${row.source_item_id}`,
             target: `property-${row.id}`,
             shape: 'arrow',
-            isValid: t => (t >= row.time_start && t <= row.time_end),
+            isValid: t => (t >= timeStart && t <= timeEnd),
           });
         }
-        if (nodeMap[`item-${row.target_item_id}`]) {
+        if (targetNode) {
           links.push({
             type: 'property',
             id: `plink-target-${row.id}`,
             source: `property-${row.id}`,
             target: `item-${row.target_item_id}`,
             shape: 'arrow',
-            isValid: t => (t >= row.time_start && t <= row.time_end),
+            isValid: t => (t >= timeStart && t <= timeEnd),
           });
         }
         if (row.relation_item_id && nodeMap[`item-${row.relation_item_id}`]) {
@@ -111,7 +204,7 @@ function convertGraph(rows) {
             source: `property-${row.id}`,
             target: `item-${row.relation_item_id}`,
             shape: 'dotted',
-            isValid: t => (t >= row.time_start && t <= row.time_end),
+            isValid: t => (t >= timeStart && t <= timeEnd),
           });
         }
       }
@@ -142,5 +235,5 @@ export async function loadGraph(url) {
   const rows = data.split('\n')
     .filter(line => line.trim() !== '')
     .map(line => JSON.parse(line.trim()));
-  return convertGraph(rows);
+  return isPropertyNode ? convertGraph(rows) : convertGraphWithPropEdges(rows);
 }

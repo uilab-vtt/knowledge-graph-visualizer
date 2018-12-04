@@ -95,19 +95,12 @@ export default class Header extends Component {
       .attr('y', 3)
 
     this.node
-      .style('opacity', d => d.isValid(currentTime) ? 1 : 0.2);
+      .style('opacity', d => d.isValid(currentTime) ? 1 : 0.05);
 
     this.node.call(this.drag(this.simulation));
 
     this.node.append('title')
       .text(d => d.label);
-  }
-
-  updateNodes() {
-    const { currentTime } = this.props;
-
-    this.node
-      .style('opacity', d => d.isValid(currentTime) ? 1 : 0.2);
   }
 
   drawLinks() {
@@ -122,18 +115,20 @@ export default class Header extends Component {
       .style('stroke-dasharray', d => d.shape === 'dotted' ? '3,3' : '3,0')
       .attr('marker-end', d => d.shape === 'arrow' ? 'url(#arrowhead)' : '')
       .attr('stroke-width', d => Math.sqrt(d.value))
-      .style('opacity', d => d.isValid(currentTime) ? 1 : 0.2);
+      .style('opacity', d => d.isValid(currentTime) ? 1 : 0.05);
   }
 
-  updateLinks() {
+  update() {
     const { currentTime } = this.props;
 
-    this.link.style('opacity', d => d.isValid(currentTime) ? 1 : 0.2);
+    this.node
+      .style('opacity', d => d.isValid(currentTime) ? 1 : 0.05);
+    this.link
+      .style('opacity', d => d.isValid(currentTime) ? 1 : 0.05);
   }
 
   updateGraph() {
-    this.updateNodes();
-    this.updateLinks();
+    this.update();
   }
 
   ticked() {
@@ -155,8 +150,8 @@ export default class Header extends Component {
           .id(d => d.id)
           .distance(d => 30)
       )
-      .force('charge', d3.forceManyBody())
-      .force('collide', d3.forceCollide(d => d.type === 'property' ? 25 : 40))
+      .force('charge', d3.forceManyBody().strength(d => d.type !== 'property' ? -30 : -3))
+      .force('collide', d3.forceCollide(d => 0))
       .force('x', d3.forceX())
       .force('y', d3.forceY());
   }
