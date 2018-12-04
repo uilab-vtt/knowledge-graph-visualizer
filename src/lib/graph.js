@@ -61,6 +61,9 @@ function convertGraph(rows) {
   for (const row of rows) {
     switch (row.type) {
       case 'item': if (true) {
+        if (row.class === 'unknown') {
+          continue;
+        }
         const node = {
           type: 'item',
           id: `item-${row.id}`,
@@ -81,23 +84,27 @@ function convertGraph(rows) {
           label: `${decamelize(row.classname)}`,
           isValid: t => (t >= row.time_start && t <= row.time_end),
         });
-        links.push({
-          type: 'property',
-          id: `plink-source-${row.id}`,
-          source: `item-${row.source_item_id}`,
-          target: `property-${row.id}`,
-          shape: 'arrow',
-          isValid: t => (t >= row.time_start && t <= row.time_end),
-        });
-        links.push({
-          type: 'property',
-          id: `plink-target-${row.id}`,
-          source: `property-${row.id}`,
-          target: `item-${row.target_item_id}`,
-          shape: 'arrow',
-          isValid: t => (t >= row.time_start && t <= row.time_end),
-        });
-        if (row.relation_item_id) {
+        if (nodeMap[`item-${row.source_item_id}`]) {
+          links.push({
+            type: 'property',
+            id: `plink-source-${row.id}`,
+            source: `item-${row.source_item_id}`,
+            target: `property-${row.id}`,
+            shape: 'arrow',
+            isValid: t => (t >= row.time_start && t <= row.time_end),
+          });
+        }
+        if (nodeMap[`item-${row.target_item_id}`]) {
+          links.push({
+            type: 'property',
+            id: `plink-target-${row.id}`,
+            source: `property-${row.id}`,
+            target: `item-${row.target_item_id}`,
+            shape: 'arrow',
+            isValid: t => (t >= row.time_start && t <= row.time_end),
+          });
+        }
+        if (row.relation_item_id && nodeMap[`item-${row.relation_item_id}`]) {
           links.push({
             type: 'property',
             id: `plink-relation-${row.id}`,
@@ -113,10 +120,12 @@ function convertGraph(rows) {
       case 'valid_time': if (true) {
         const nodeId = `item-${row.item_id}`;
         const node = nodeMap[nodeId];
-        const isPrevValid = node.isValid;
-        node.isValid = null;
-        // eslint-disable-next-line no-loop-func
-        node.isValid = t => (isPrevValid(t) || (t >= row.time_start && t <= row.time_end));
+        if (node) {
+          const isPrevValid = node.isValid;
+          node.isValid = null;
+          // eslint-disable-next-line no-loop-func
+          node.isValid = t => (isPrevValid(t) || (t >= row.time_start && t <= row.time_end));
+        }
       }
       break; 
 
