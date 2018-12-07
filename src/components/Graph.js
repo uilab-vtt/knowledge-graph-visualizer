@@ -93,7 +93,6 @@ export default class Header extends Component {
     const tickCount = Math.ceil(Math.log(this.simulation.alphaMin()) / Math.log(1 - this.simulation.alphaDecay()));
     for (let i = 0; i < tickCount; i++) {
       this.simulation.tick();
-      console.log('tick');
     }
   }
 
@@ -175,7 +174,7 @@ export default class Header extends Component {
           .distance(d => 30)
       )
       .force('charge', d3.forceManyBody().strength(d => d.type !== 'property' ? -30 : -3))
-      .force('collide', d3.forceCollide(d => 15))
+      .force('collide', d3.forceCollide(d => 20))
       .force('x', d3.forceX())
       .force('y', d3.forceY());
   }
