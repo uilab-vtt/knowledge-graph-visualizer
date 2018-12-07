@@ -26,6 +26,7 @@ const ITEM_CLASSNAMES = [
   'location',
   'emotion',
   'sound',
+  'unknown',
 ];
 
 const PROP_CLASSNAMES = [
@@ -144,6 +145,19 @@ function convertGraph(rows) {
     switch (row.type) {
       case 'item': if (true) {
         if (row.class === 'unknown') {
+          if (!nodeMap['item-unknown']) {
+            const unknownNode = {
+              type: 'item',
+              id: 'item-unknown',
+              color: getItemColor(row),
+              label: 'item:boxed',
+              isAbstract: true,
+              isValid: () => false,
+            };
+            nodes.push(unknownNode);
+            nodeMap['item-unknown'] = unknownNode;
+          }
+          nodeMap[`item-${row.id}`] = nodeMap['item-unknown'];
           continue;
         }
         const node = {
@@ -170,19 +184,20 @@ function convertGraph(rows) {
         if (targetNode && targetNode.isAbstract) {
           addNodeValidTime(targetNode, timeStart, timeEnd);
         }
-        nodes.push({
+        const propNode = {
           type: 'property',
           id: `property-${row.id}`,
           color: getPropColor(row),
           label: `${decamelize(row.classname)}`,
           isValid: t => (t >= timeStart && t <= timeEnd),
-        });
+        };
+        nodes.push(propNode);
         if (sourceNode) {
           links.push({
             type: 'property',
             id: `plink-source-${row.id}`,
-            source: `item-${row.source_item_id}`,
-            target: `property-${row.id}`,
+            source: sourceNode.id,
+            target: propNode.id,
             shape: 'arrow',
             isValid: t => (t >= timeStart && t <= timeEnd),
           });
@@ -191,21 +206,24 @@ function convertGraph(rows) {
           links.push({
             type: 'property',
             id: `plink-target-${row.id}`,
-            source: `property-${row.id}`,
-            target: `item-${row.target_item_id}`,
+            source: propNode.id,
+            target: targetNode.id,
             shape: 'arrow',
             isValid: t => (t >= timeStart && t <= timeEnd),
           });
         }
-        if (row.relation_item_id && nodeMap[`item-${row.relation_item_id}`]) {
-          links.push({
-            type: 'property',
-            id: `plink-relation-${row.id}`,
-            source: `property-${row.id}`,
-            target: `item-${row.relation_item_id}`,
-            shape: 'dotted',
-            isValid: t => (t >= timeStart && t <= timeEnd),
-          });
+        if (row.relation_item_id) {
+          const relationNode = nodeMap[`item-${row.relation_item_id}`];
+          if (relationNode) {
+            links.push({
+              type: 'property',
+              id: `plink-relation-${row.id}`,
+              source: propNode.id,
+              target: relationNode.id,
+              shape: 'dotted',
+              isValid: t => (t >= timeStart && t <= timeEnd),
+            });
+          }
         }
       }
       break;
