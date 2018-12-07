@@ -37,14 +37,20 @@ export default class Header extends Component {
   };
 
   drawGraph() {
-    const { graph } = this.props;
+    const { graph, dynamic } = this.props;
 
     this.data = {
       links: graph.links.map(d => Object.create(d)),
       nodes: graph.nodes.map(d => Object.create(d)),
     };
 
-    this.simulation = this.forceSimulation(this.data.nodes, this.data.links).on("tick", () => this.ticked());
+    this.simulation = this
+      .forceSimulation(this.data.nodes, this.data.links)
+      .on("tick", () => this.ticked())
+
+    if (!dynamic) {
+      this.simulation.stop();
+    }    
 
     const boxWidth = this.box.clientWidth;
     const boxHeight = this.box.clientHeight;
@@ -69,14 +75,30 @@ export default class Header extends Component {
       .attr('fill', '#999')
       .style('stroke', 'none');
 
+    if (!dynamic) {
+      this.simulate();
+    }    
+
     this.drawLinks();
     this.drawNodes();
+
+    if (!dynamic) {
+      this.ticked();
+    }
 
     return this.svg.node();
   }
 
+  simulate() {
+    const tickCount = Math.ceil(Math.log(this.simulation.alphaMin()) / Math.log(1 - this.simulation.alphaDecay()));
+    for (let i = 0; i < tickCount; i++) {
+      this.simulation.tick();
+      console.log('tick');
+    }
+  }
+
   drawNodes() {
-    const { currentTime } = this.props;
+    const { currentTime, dynamic } = this.props;
 
     this.node = this.svg.append('g')
       .attr('class', 'g-node')
@@ -97,10 +119,12 @@ export default class Header extends Component {
     this.node
       .style('opacity', d => d.isValid(currentTime) ? 1 : 0.05);
 
-    this.node.call(this.drag(this.simulation));
-
     this.node.append('title')
       .text(d => d.label);
+
+    if (dynamic) {
+      this.node.call(this.drag(this.simulation));
+    }
   }
 
   drawLinks() {
@@ -151,7 +175,7 @@ export default class Header extends Component {
           .distance(d => 30)
       )
       .force('charge', d3.forceManyBody().strength(d => d.type !== 'property' ? -30 : -3))
-      .force('collide', d3.forceCollide(d => 0))
+      .force('collide', d3.forceCollide(d => 15))
       .force('x', d3.forceX())
       .force('y', d3.forceY());
   }
