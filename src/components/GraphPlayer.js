@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { Player, ControlBar } from 'video-react';
 import Slider from 'rc-slider';
+import BoxPlayer from './BoxPlayer';
 import Graph from './Graph';
 import './GraphPlayer.css';
 
@@ -26,6 +27,8 @@ export default class GraphPlayer extends Component {
       duration: state.duration,
       paused: state.paused,
       currentTime: state.currentTime,
+      videoWidth: state.videoWidth,
+      videoHeight: state.videoHeight,
     });
   }
 
@@ -47,6 +50,8 @@ export default class GraphPlayer extends Component {
     const {
       duration,
       currentTime,
+      videoWidth,
+      videoHeight,
     } = this.state;
     return (
       <div className="GraphPlayer">
@@ -58,6 +63,14 @@ export default class GraphPlayer extends Component {
             />
           </div>
           <div className="GraphPlayer-video-container">
+            <div className="GraphPlayer-box-container">
+              <BoxPlayer 
+                boxes={graph.boxes} 
+                currentTime={currentTime}
+                videoWidth={videoWidth}
+                videoHeight={videoHeight}
+              />
+            </div>
             <Player
               ref={e => (this.player = e)}
               className="GraphPlayer-player"

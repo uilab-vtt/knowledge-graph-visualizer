@@ -37,9 +37,8 @@ const PROP_CLASSNAMES = [
   'sound_of',
 ];
 
-const TIME_SLACK = 0.35;
+const TIME_SLACK = 0.5;
 
-const isPropertyNode = true;
 const mergePropClassNodes = false;
 
 function getItemColor(item) {
@@ -67,83 +66,40 @@ function addNodeValidTime(node, timeStart, timeEnd) {
   node.isValid = t => (isPrevValid(t) || (t >= timeStart && t <= timeEnd));
 }
 
-function convertGraphWithPropEdges(rows) {
-  const nodes = [];
-  const links = [];
-  const nodeMap = {};
-  for (const row of rows) {
-    switch (row.type) {
-      case 'item': if (true) {
-        if (row.class === 'unknown') {
-          continue;
-        }
-        const node = {
-          type: 'item',
-          id: `item-${row.id}`,
-          color: getItemColor(row),
-          label: `${row.class}:${row.label}`,
-          isAbstract: row.is_abstract,
-          isValid: row.is_abstract ? () => false : () => true,
-        };
-        nodes.push(node);
-        nodeMap[node.id] = node;
-      }
-        break;
-
-      case 'property': if (true) {
-        const sourceNode = nodeMap[`item-${row.source_item_id}`];
-        const targetNode = nodeMap[`item-${row.target_item_id}`];
-        const timeStart = row.time_start - TIME_SLACK;
-        const timeEnd = row.time_end + TIME_SLACK;
-        if (sourceNode && sourceNode.isAbstract) {
-          addNodeValidTime(sourceNode, timeStart, timeEnd);
-        }
-        if (targetNode && targetNode.isAbstract) {
-          addNodeValidTime(targetNode, timeStart, timeEnd);
-        }
-        if (!(row.relation_item_id)) {
-          if (sourceNode && targetNode) {
-            links.push({
-              type: 'property',
-              id: `plink-source-${row.id}`,
-              source: `item-${row.source_item_id}`,
-              target: `item-${row.target_item_id}`,
-              label: `${decamelize(row.classname)}`,
-              shape: 'arrow',
-              isValid: t => (t >= timeStart && t <= timeEnd),
-            });
-          }
-        } else {
-
-        }
-      }
-        break;
-
-      case 'valid_time': if (true) {
-        const nodeId = `item-${row.item_id}`;
-        const node = nodeMap[nodeId];
-        if (node) {
-          const isPrevValid = node.isValid;
-          node.isValid = null;
-          // eslint-disable-next-line no-loop-func
-          node.isValid = t => (isPrevValid(t) || (t >= row.time_start && t <= row.time_end));
-        }
-      }
-        break;
-
-      default:
-        break;
-    }
-  }
-  return { nodes, links };
+function addNodeBoxedTime(node, timeStart, timeEnd) {
+  const isPrevBoxed = node.isBoxed;
+  node.isBoxed = null;
+  // eslint-disable-next-line no-loop-func
+  node.isBoxed = t => (isPrevBoxed(t) || (t >= timeStart && t <= timeEnd));
 }
 
 function convertGraph(rows) {
   const nodes = [];
   const links = [];
+  const boxes = [];
   const nodeMap = {};
   for (const row of rows) {
     switch (row.type) {
+      case 'box': if (true) {
+        const timeStart = row.time - TIME_SLACK;
+        const timeEnd = row.time + TIME_SLACK;
+        const itemNode = nodeMap[`item-${row.item_id}`];
+        const box = {
+          id: `box-${row.id}`,
+          timeStart,
+          timeEnd,
+          x: row.x_start,
+          y: row.y_start,
+          w: row.x_end - row.x_start,
+          h: row.y_end - row.y_start,
+        };
+        boxes.push(box);
+        if (itemNode) {
+          addNodeBoxedTime(itemNode, timeStart, timeEnd);
+        }
+      }
+      break;
+
       case 'item': if (true) {
         if (row.class === 'unknown') {
           if (!nodeMap['item-unknown']) {
@@ -154,6 +110,7 @@ function convertGraph(rows) {
               label: 'item:boxed',
               isAbstract: true,
               isValid: () => false,
+              isBoxed: () => false,
             };
             nodes.push(unknownNode);
             nodeMap['item-unknown'] = unknownNode;
@@ -168,6 +125,7 @@ function convertGraph(rows) {
           label: `${row.class}:${row.label}`,
           isAbstract: row.is_abstract,
           isValid: row.is_abstract ? () => false : () => true,
+          isBoxed: () => false,
         };
         nodes.push(node);
         nodeMap[node.id] = node;
@@ -195,6 +153,7 @@ function convertGraph(rows) {
               color: getPropColor(row),
               label: `${decamelize(row.classname)}`,
               isValid: t => false,
+              isBoxed: () => false,
             }
             nodeMap[propClassNodeId] = propClassNode;
             nodes.push(propClassNode);
@@ -208,6 +167,7 @@ function convertGraph(rows) {
             color: getPropColor(row),
             label: `${decamelize(row.classname)}`,
             isValid: t => (t >= timeStart && t <= timeEnd),
+            isBoxed: () => false,
           };
           nodes.push(propNode);
         }
@@ -263,7 +223,7 @@ function convertGraph(rows) {
       break;
     }
   }
-  return { nodes, links };
+  return { nodes, links, boxes };
 }
 
 export async function loadGraph(url) {
@@ -272,5 +232,5 @@ export async function loadGraph(url) {
   const rows = data.split('\n')
     .filter(line => line.trim() !== '')
     .map(line => JSON.parse(line.trim()));
-  return isPropertyNode ? convertGraph(rows) : convertGraphWithPropEdges(rows);
+  return convertGraph(rows);
 }

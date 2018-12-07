@@ -16,8 +16,11 @@ export default class Graph extends Component {
 
   componentDidUpdate(prevProps, prevState) {
     const { currentTime } = this.props;
+    const { startButtonVisible } = this.state;
     if (currentTime !== prevProps.currentTime) {
-      this.updateGraph();
+      if (!startButtonVisible) {
+        this.updateGraph();
+      }
     }
   }
 
@@ -120,15 +123,19 @@ export default class Graph extends Component {
     this.nodeCircles = this.node.append('circle')
       .attr('r', 5)
       .attr('fill', d => `#${d.color}`)
+      .attr('stroke', '#cc0f0f')
+      .attr('stroke-width', 0);
 
     this.nodeLabels = this.node.append('text')
       .text(d => d.label)
       .attr('class', 'g-node-labels')
       .attr('x', 8)
-      .attr('y', 3)
+      .attr('y', 3);
 
     this.node
       .style('opacity', d => d.isValid(currentTime) ? 1 : 0.05);
+    this.nodeCircles
+      .attr('stroke-width', d => d.isBoxed(currentTime) ? 2 : 0);
 
     this.node.append('title')
       .text(d => d.label);
@@ -158,6 +165,8 @@ export default class Graph extends Component {
 
     this.node
       .style('opacity', d => d.isValid(currentTime) ? 1 : 0.05);
+    this.nodeCircles
+      .attr('stroke-width', d => d.isBoxed(currentTime) ? 2 : 0);
     this.link
       .style('opacity', d => d.isValid(currentTime) ? 1 : 0.05);
   }
@@ -244,12 +253,12 @@ export default class Graph extends Component {
     const { startButtonVisible } = this.state;
     return startButtonVisible ? (
       <div className="Graph-message-container">
-        <a 
+        <button 
           className="button"
           onClick={() => this.handleStartbutton()}
         >
-          Start Loading
-        </a>
+          Load Graph
+        </button>
       </div>
     ) : null;
   }

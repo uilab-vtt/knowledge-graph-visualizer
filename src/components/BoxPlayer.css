@@ -1,0 +1,13 @@
+.BoxPlayer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  z-index: 999;
+}
+
+.BoxPlayer-box {
+  box-sizing: border-box;
+  position: absolute;
+  border: 2px solid #cc0f0f;
+  background-color: transparent;
+}

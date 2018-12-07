@@ -19,7 +19,19 @@
 .GraphPlayer-video-container {
   position: absolute;
   width: 320px;
-  height: 240px;
+  height: 180px;
+  right: 0;
+  top: 0;
+}
+
+.GraphPlayer-player {
+  z-index: 300;
+}
+
+.GraphPlayer-box-container {
+  position: absolute;
+  width: 320px;
+  height: 180px;
   right: 0;
   top: 0;
 }
