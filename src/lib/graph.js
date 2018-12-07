@@ -40,6 +40,7 @@ const PROP_CLASSNAMES = [
 const TIME_SLACK = 0.35;
 
 const isPropertyNode = true;
+const mergePropClassNodes = false;
 
 function getItemColor(item) {
   const idx = ITEM_CLASSNAMES.indexOf(item.class);
@@ -184,14 +185,32 @@ function convertGraph(rows) {
         if (targetNode && targetNode.isAbstract) {
           addNodeValidTime(targetNode, timeStart, timeEnd);
         }
-        const propNode = {
-          type: 'property',
-          id: `property-${row.id}`,
-          color: getPropColor(row),
-          label: `${decamelize(row.classname)}`,
-          isValid: t => (t >= timeStart && t <= timeEnd),
-        };
-        nodes.push(propNode);
+        let propNode = null;
+        if (mergePropClassNodes) {
+          const propClassNodeId = `property-class-${row.classname}`;
+          if (!nodeMap[propClassNodeId]) {
+            const propClassNode = {
+              type: 'property',
+              id: propClassNodeId,
+              color: getPropColor(row),
+              label: `${decamelize(row.classname)}`,
+              isValid: t => false,
+            }
+            nodeMap[propClassNodeId] = propClassNode;
+            nodes.push(propClassNode);
+          }
+          propNode = nodeMap[propClassNodeId];
+          addNodeValidTime(propNode, timeStart, timeEnd);
+        } else {
+          propNode = {
+            type: 'property',
+            id: `property-${row.id}`,
+            color: getPropColor(row),
+            label: `${decamelize(row.classname)}`,
+            isValid: t => (t >= timeStart && t <= timeEnd),
+          };
+          nodes.push(propNode);
+        }
         if (sourceNode) {
           links.push({
             type: 'property',

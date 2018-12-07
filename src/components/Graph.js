@@ -3,10 +3,14 @@ import { throttle } from 'throttle-debounce';
 import * as d3 from 'd3';
 import './Graph.css';
 
-export default class Header extends Component {
+export default class Graph extends Component {
+  state = {
+    startButtonVisible: true,
+    message: null,
+  };
+
   componentDidMount() {
     this.adjustViewBoxThr = throttle(500, this.adjustViewBox); 
-    this.drawGraph();
     window.addEventListener('resize', this.handleResize);
   }
 
@@ -38,6 +42,10 @@ export default class Header extends Component {
 
   drawGraph() {
     const { graph, dynamic } = this.props;
+
+    this.setState({
+      message: 'Drawing the graph...',
+    });
 
     this.data = {
       links: graph.links.map(d => Object.create(d)),
@@ -76,6 +84,9 @@ export default class Header extends Component {
       .style('stroke', 'none');
 
     if (!dynamic) {
+      this.setState({
+        message: 'Optimizing the shape of the graph...',
+      });
       this.simulate();
     }    
 
@@ -86,6 +97,7 @@ export default class Header extends Component {
       this.ticked();
     }
 
+    this.setState({ message: null });
     return this.svg.node();
   }
 
@@ -174,7 +186,7 @@ export default class Header extends Component {
           .distance(d => 30)
       )
       .force('charge', d3.forceManyBody().strength(d => d.type !== 'property' ? -30 : -3))
-      .force('collide', d3.forceCollide(d => 20))
+      .force('collide', d3.forceCollide(d => 0))
       .force('x', d3.forceX())
       .force('y', d3.forceY());
   }
@@ -208,9 +220,45 @@ export default class Header extends Component {
       .on('end', dragended);
   }
 
+  handleStartbutton() {
+    this.setState({
+      startButtonVisible: false,
+      message: 'Loading...',
+    }, () => {
+      setTimeout(() => this.drawGraph(), 300);
+    });
+  }
+
+  renderStatus() {
+    const { message } = this.state;
+    return message ? (
+      <div className="Graph-message-container">
+        <div className="Graph-message">
+          {message}
+        </div>
+      </div>
+    ) : null;
+  }
+
+  renderStartButton() {
+    const { startButtonVisible } = this.state;
+    return startButtonVisible ? (
+      <div className="Graph-message-container">
+        <a 
+          className="button"
+          onClick={() => this.handleStartbutton()}
+        >
+          Start Loading
+        </a>
+      </div>
+    ) : null;
+  }
+
   render() {
     return (
       <div className="Graph">
+        {this.renderStartButton()}
+        {this.renderStatus()}
         <div 
           ref={e => (this.box = e)}
           className="Graph-box"
