@@ -81,8 +81,8 @@ function convertGraph(rows) {
   for (const row of rows) {
     switch (row.type) {
       case 'box': if (true) {
-        const timeStart = row.time - TIME_SLACK;
-        const timeEnd = row.time + TIME_SLACK;
+        const timeStart = row.time;
+        const timeEnd = row.time + (TIME_SLACK * 2);
         const itemNode = nodeMap[`item-${row.item_id}`];
         const box = {
           id: `box-${row.id}`,
