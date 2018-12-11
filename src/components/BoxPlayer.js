@@ -2,6 +2,35 @@ import React, { Component } from 'react';
 import './BoxPlayer.css';
 
 export default class BoxPlayer extends Component {
+  state = {
+    boxes: [],
+  };
+  prevUpdateTime = 0;
+
+  componentDidMount() {
+    this.updateBoxes();
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    const { currentTime, boxes } = this.props;
+    if (prevProps.boxes !== boxes) {
+      this.updateBoxes();
+    }
+    if (Math.abs(this.prevUpdateTime - currentTime) > 0.5) {
+      this.updateBoxes();
+    }
+  }
+
+  updateBoxes() {
+    const { boxes, currentTime } = this.props;
+    if (boxes) {
+      const visibleBoxes = boxes
+        .filter(box => (currentTime >= box.timeStart && currentTime <= box.timeEnd));
+      this.prevUpdateTime = currentTime;
+      this.setState({ boxes: visibleBoxes });
+    }
+  }
+
   getStyle(x, y, w, h) {
     const { videoWidth, videoHeight } = this.props;
     return {
@@ -13,12 +42,8 @@ export default class BoxPlayer extends Component {
   }
 
   renderBoxes() {
-    const { 
-      boxes, 
-      currentTime,
-    } = this.props;
+    const { boxes } = this.state;
     return boxes
-      .filter(box => (currentTime >= box.timeStart && currentTime <= box.timeEnd))
       .map(box => (
         <div 
           className="BoxPlayer-box"
