@@ -1,6 +1,8 @@
 import React, { Component } from 'react';
 import './BoxPlayer.css';
 
+const MIN_INTERVAL = 0.2;
+
 export default class BoxPlayer extends Component {
   state = {
     boxes: [],
@@ -16,7 +18,7 @@ export default class BoxPlayer extends Component {
     if (prevProps.boxes !== boxes) {
       this.updateBoxes();
     }
-    if (Math.abs(this.prevUpdateTime - currentTime) > 0.5) {
+    if (Math.abs(this.prevUpdateTime - currentTime) > MIN_INTERVAL) {
       this.updateBoxes();
     }
   }

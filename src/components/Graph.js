@@ -3,11 +3,14 @@ import { throttle } from 'throttle-debounce';
 import * as d3 from 'd3';
 import './Graph.css';
 
+const MIN_INTERVAL = 0.5;
+
 export default class Graph extends Component {
   state = {
     startButtonVisible: true,
     message: null,
   };
+  prevUpdateTime = 0;
 
   componentDidMount() {
     this.adjustViewBoxThr = throttle(500, this.adjustViewBox); 
@@ -17,7 +20,7 @@ export default class Graph extends Component {
   componentDidUpdate(prevProps, prevState) {
     const { currentTime } = this.props;
     const { startButtonVisible } = this.state;
-    if (currentTime !== prevProps.currentTime) {
+    if (Math.abs(this.prevUpdateTime - currentTime) > MIN_INTERVAL) {
       if (!startButtonVisible) {
         this.updateGraph();
       }
@@ -172,6 +175,8 @@ export default class Graph extends Component {
   }
 
   updateGraph() {
+    const { currentTime } = this.props;
+    this.prevUpdateTime = currentTime;
     this.update();
   }
 
