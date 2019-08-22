@@ -1,0 +1,10 @@
+.SentencePlayer {
+  padding: 16px 8px;
+}
+
+.SentencePlayer-sentence {
+  padding: 2px 0;
+  font-size: 14px;
+  font-weight: bold;
+  line-height: 1.4em;
+}

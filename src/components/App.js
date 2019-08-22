@@ -3,12 +3,14 @@ import Header from './Header';
 import GraphPlayer from './GraphPlayer';
 import Config from '../config.json';
 import { loadGraph } from '../lib/graph';
+import { loadSentences } from '../lib/sentences';
 import './App.css';
 
 export default class App extends Component {
   state = {
     videoUrl: null,
     graph: null,
+    sentences: null,
   };
 
   componentDidMount() {
@@ -18,16 +20,20 @@ export default class App extends Component {
     loadGraph(Config.graph)
       .then(graph => this.setState({ graph }))
       .catch(e => console.error(e));
+    loadSentences(Config.sentences)
+      .then(sentences => this.setState({ sentences }))
+      .catch(e => console.error(e));
   }
 
   renderGraphPlayer() {
-    const { graph, videoUrl } = this.state;
-    return graph === null ? '' : (
+    const { graph, sentences, videoUrl } = this.state;
+    return graph && sentences ? (
       <GraphPlayer
         videoUrl={videoUrl}
         graph={graph}
+        sentences={sentences}
       />
-    );
+    ) : '';
   }
 
   render() {

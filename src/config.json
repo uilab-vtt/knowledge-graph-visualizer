@@ -1,4 +1,5 @@
 {
-    "graph": "/data/test_output.jsonl",
-    "video": "/data/test.mp4"
+    "graph": "/data/friends_s01_e01.graph.jsonl",
+    "sentences": "/data/friends_s01_e01.sentences.jsonl",
+    "video": "/data/friends_s01_e01.mp4"
 }

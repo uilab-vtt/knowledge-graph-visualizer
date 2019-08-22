@@ -2,6 +2,7 @@ import React, { Component } from 'react';
 import { Player, ControlBar } from 'video-react';
 import Slider from 'rc-slider';
 import BoxPlayer from './BoxPlayer';
+import SentencePlayer from './SentencePlayer';
 import Graph from './Graph';
 import './GraphPlayer.css';
 
@@ -46,7 +47,7 @@ export default class GraphPlayer extends Component {
   }
   
   render() {
-    const { graph, videoUrl } = this.props;
+    const { graph, sentences, videoUrl } = this.props;
     const {
       duration,
       currentTime,
@@ -79,6 +80,12 @@ export default class GraphPlayer extends Component {
               <ControlBar disableCompletely />
             </Player>
           </div>
+        </div>
+        <div className="GraphPlayer-sentences-row">
+          <SentencePlayer
+            sentences={sentences}
+            currentTime={currentTime}
+          />
         </div>
         <div className="GraphPlayer-controller-row">
           <div className="GraphPlayer-buttons-container">
